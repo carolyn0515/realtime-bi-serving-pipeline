@@ -1,0 +1,12 @@
+name: baseline_medium
+
+view_to_cart_ratio: 0.35
+cart_to_purchase_ratio: 0.45
+
+behavior_delay:
+  view_to_cart_min_seconds: 30
+  view_to_cart_max_seconds: 1200
+  view_to_purchase_min_seconds: 60
+  view_to_purchase_max_seconds: 1800
+  cart_to_purchase_min_seconds: 30
+  cart_to_purchase_max_seconds: 600
