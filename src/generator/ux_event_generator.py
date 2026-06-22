@@ -4,41 +4,80 @@ import pandas as pd
 import numpy as np
 from src.generator.features import freight_tier, price_tier, review_tier
 from src.generator.schema import UxEvent
-from src.generator.traffic_profile import BehaviorDelayProfile
+from src.generator.traffic_profile import BehaviorDelayProfile, FunnelTrafficProfile
 
-def sample_event_times(
-        purchase_time: pd.Timestamp,
+def sample_funnel_outcome(
         rng: np.random.Generator,
-        delay_profile: BehaviorDelayProfile,
-) -> tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp]:
-    
-    view_to_purchase_seconds = rng.integers(
-        delay_profile.view_to_purchase_min_seconds,
-        delay_profile.view_to_purchase_max_seconds + 1,
-    )
+        traffic_profile: FunnelTrafficProfile,
+) -> str:
+    has_cart = rng.random() < traffic_profile.view_to_cart_ratio
+    if not has_cart:
+        return "view_only"
+    has_purchase = rng.random() < traffic_profile.cart_to_purchase_ratio
+    if not has_purchase:
+        return "cart_abandoned"
+    return "purchased"
 
-    cart_to_purchase_upper_bound = min(
-        delay_profile.cart_to_purchase_max_seconds,
-        view_to_purchase_seconds-1,
-    )
+def sample_event_times_for_outcome(
+    anchor_time: pd.Timestamp,
+    outcome: str,
+    rng: np.random.Generator,
+    delay_profile: BehaviorDelayProfile,
+) -> dict[str, pd.Timestamp]:
+    if outcome == "view_only":
+        return {
+            "view": anchor_time,
+        }
 
-    cart_to_purchase_seconds = rng.integers(
-        delay_profile.cart_to_purchase_min_seconds,
-        cart_to_purchase_upper_bound + 1,
-    )
+    if outcome == "cart_abandoned":
+        view_to_cart_seconds = rng.integers(
+            delay_profile.view_to_cart_min_seconds,
+            delay_profile.view_to_cart_max_seconds + 1,
+        )
 
-    view_time = purchase_time - timedelta(seconds=int(view_to_purchase_seconds))
-    cart_time = purchase_time - timedelta(seconds=int(cart_to_purchase_seconds))
+        view_time = anchor_time - timedelta(seconds=int(view_to_cart_seconds))
+        cart_time = anchor_time
 
-    return view_time, cart_time, purchase_time
+        return {
+            "view": view_time,
+            "cart": cart_time,
+        }
 
+    if outcome == "purchased":
+        view_to_purchase_seconds = rng.integers(
+            delay_profile.view_to_purchase_min_seconds,
+            delay_profile.view_to_purchase_max_seconds + 1,
+        )
+
+        cart_to_purchase_upper_bound = min(
+            delay_profile.cart_to_purchase_max_seconds,
+            view_to_purchase_seconds - 1,
+        )
+
+        cart_to_purchase_seconds = rng.integers(
+            delay_profile.cart_to_purchase_min_seconds,
+            cart_to_purchase_upper_bound + 1,
+        )
+
+        view_time = anchor_time - timedelta(seconds=int(view_to_purchase_seconds))
+        cart_time = anchor_time - timedelta(seconds=int(cart_to_purchase_seconds))
+        purchase_time = anchor_time
+
+        return {
+            "view": view_time,
+            "cart": cart_time,
+            "purchase": purchase_time,
+        }
+
+    raise ValueError(f"Unsupported funnel outcome: {outcome}")
 
 def generate_ux_events(
     interactions: pd.DataFrame,
-    seed: int=42,
-    delay_profile: BehaviorDelayProfile | None = None,
+    seed: int,
+    delay_profile: BehaviorDelayProfile,
+    traffic_profile: FunnelTrafficProfile,
 ) -> list[UxEvent]:
-    delay_profile = delay_profile or BehaviorDelayProfile()
+    
     rng = np.random.default_rng(seed)
     shuffled_indices = rng.permutation(len(interactions))
 
@@ -46,17 +85,28 @@ def generate_ux_events(
 
     for idx in shuffled_indices:
         row = interactions.iloc[idx]
-        session_id = str(uuid4())
-        user_id = row["customer_unique_id"]
-        order_id = row["order_id"]
-        order_item_id = f"{row['order_id']}:{row['order_item_id']}"
-        product_id = row["product_id"]
 
-        purchase_time = row["order_purchase_timestamp"]
-        view_time, cart_time, purchase_time = sample_event_times(
-            purchase_time=purchase_time,
+        outcome = sample_funnel_outcome(
+            rng=rng,
+            traffic_profile=traffic_profile,
+        )
+
+        event_times = sample_event_times_for_outcome(
+            anchor_time=row["order_purchase_timestamp"],
+            outcome=outcome,
             rng=rng,
             delay_profile=delay_profile,
+        )
+
+        session_id = str(uuid4())
+        user_id = row["customer_unique_id"]
+        product_id = row["product_id"]
+
+        order_id = row["order_id"] if outcome == "purchased" else None
+        order_item_id = (
+            f"{row['order_id']}:{row['order_item_id']}"
+            if outcome == "purchased"
+            else None
         )
 
         review_score = None if pd.isna(row.get("review_score")) else float(row["review_score"])
@@ -79,32 +129,18 @@ def generate_ux_events(
             "seller_state": row.get("seller_state") or "unknown",
         }
 
-        events.append(
-            UxEvent(
-                event_id=str(uuid4()),
-                event_type="view",
-                event_time=view_time,
-                **base
-            )
-        )
+        for event_type in ("view", "cart", "purchase"):
+            if event_type not in event_times:
+                continue
 
-        events.append(
-            UxEvent(
-                event_id=str(uuid4()),
-                event_type="cart",
-                event_time=cart_time,
-                **base,
+            events.append(
+                UxEvent(
+                    event_id=str(uuid4()),
+                    event_type=event_type,
+                    event_time=event_times[event_type],
+                    **base,
+                )
             )
-        )
-
-        events.append(
-            UxEvent(
-                event_id=str(uuid4()),
-                event_type="purchase",
-                event_time=purchase_time,
-                **base,
-            )
-        )
 
     events.sort(key=lambda event: event.event_time)
     return events
