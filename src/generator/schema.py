@@ -6,8 +6,8 @@ class UxEvent:
     event_id: str
     session_id: str
     user_id: str
-    order_id: str
-    order_item_id: str
+    order_id: str | None
+    order_item_id: str | None
     product_id: str
     event_type: str
     event_time: datetime
