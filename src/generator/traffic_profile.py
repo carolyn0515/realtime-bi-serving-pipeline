@@ -6,3 +6,8 @@ class BehaviorDelayProfile:
     view_to_purchase_max_seconds: int=30*60
     cart_to_purchase_min_seconds: int=30
     cart_to_purchase_max_seconds: int=10*60
+
+@dataclass(frozen=True)
+class FunnelTrafficProfile:
+    view_to_cart_ratio: float
+    cart_to_purchase_ratio: float
