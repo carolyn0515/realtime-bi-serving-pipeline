@@ -1,0 +1,21 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Generated data and local warehouses
+data/generated/*
+!data/generated/.gitkeep
+data/samples/*
+!data/samples/.gitkeep
+warehouse/
+checkpoints/
+savepoints/
+
+# Local service state
+docker/.env
+*.log

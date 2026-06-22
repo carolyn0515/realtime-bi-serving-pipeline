@@ -1,0 +1,25 @@
+[project]
+name = "realtime-bi-serving-pipeline"
+version = "0.1.0"
+description = "Trusted realtime funnel BI serving pipeline with synthetic UX logs from Olist data."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "pyarrow>=15.0",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
