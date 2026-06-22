@@ -1,5 +1,7 @@
 from pathlib import Path
 import pandas as pd
+import yaml
+from src.generator.traffic_profile import StreamRateProfile
 
 def load_olist_interactions(archive_dir: str | Path) -> pd.DataFrame:
     archive_dir = Path(archive_dir)
@@ -24,3 +26,15 @@ def load_olist_interactions(archive_dir: str | Path) -> pd.DataFrame:
     df["review_score"] = df["review_score"].astype("float")
 
     return df
+
+def laod_stream_rate_profile(path: str | Path) -> StreamRateProfile:
+    path = Path(path)
+    with path.open("r", encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    stream_rate = raw["stream_rate"]
+
+    return StreamRateProfile(
+        mean_events_per_second=float(stream_rate["mean_events_per_second"]),
+        min_sleep_seconds=float(stream_rate["min_sleep_seconds"]),
+        max_sleep_seconds=float(stream_rate["max_sleep_seconds"]),
+    )
