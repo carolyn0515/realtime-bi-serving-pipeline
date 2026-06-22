@@ -10,3 +10,8 @@ behavior_delay:
   view_to_purchase_max_seconds: 1800
   cart_to_purchase_min_seconds: 30
   cart_to_purchase_max_seconds: 600
+
+stream_rate:
+  mean_events_per_second: 5.0
+  min_sleep_seconds: 0.02
+  max_sleep_seconds: 2.0
