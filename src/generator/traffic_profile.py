@@ -56,3 +56,34 @@ def load_behavior_delay_profile(path: str | Path) -> BehaviorDelayProfile:
         cart_to_purchase_min_seconds=int(delay["cart_to_purchase_min_seconds"]),
         cart_to_purchase_max_seconds=int(delay["cart_to_purchase_max_seconds"]),
     )
+
+@dataclass(frozen=True)
+class StreamRateProfile:
+    mean_events_per_second: float
+    min_sleep_seconds: float
+    max_sleep_seconds: float
+
+def load_stream_rate_profile(path: str | Path) -> StreamRateProfile:
+    path = Path(path)
+
+    with path.open("r", encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+
+    stream_rate = raw["stream_rate"]
+
+    mean_events_per_second = float(stream_rate["mean_events_per_second"])
+    min_sleep_seconds = float(stream_rate["min_sleep_seconds"])
+    max_sleep_seconds = float(stream_rate["max_sleep_seconds"])
+
+    if mean_events_per_second <= 0:
+        raise ValueError("mean_events_per_second must be greater than 0")
+    if min_sleep_seconds < 0:
+        raise ValueError("min_sleep_seconds must be greater than or equal to 0")
+    if max_sleep_seconds < min_sleep_seconds:
+        raise ValueError("max_sleep_seconds must be greater than or equal to min_sleep_seconds")
+
+    return StreamRateProfile(
+        mean_events_per_second=mean_events_per_second,
+        min_sleep_seconds=min_sleep_seconds,
+        max_sleep_seconds=max_sleep_seconds,
+    )
