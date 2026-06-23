@@ -18,7 +18,7 @@ ARCHIVE_DIR = Path("/Users/carolyn/Desktop/study/DataEngineering/project/archive
 TRAFFIC_PROFILE_PATH = Path("configs/local/traffic_profile.yaml")
 
 SAMPLE_SIZE = 100
-SEED = 42
+SEED = None
 
 
 def main() -> None:

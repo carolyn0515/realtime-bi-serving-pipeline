@@ -25,7 +25,11 @@ def sample_sleep_seconds(
     rng: np.random.Generator,
     stream_rate_profile: StreamRateProfile,
 ) -> float:
-    mean_interval_seconds = 1 / stream_rate_profile.mean_events_per_second
+    mean_events_per_second = rng.uniform(
+        stream_rate_profile.mean_events_per_second_min,
+        stream_rate_profile.mean_events_per_second_max,
+    )
+    mean_interval_seconds = 1 / mean_events_per_second
     sleep_seconds = rng.exponential(mean_interval_seconds)
 
     return float(
@@ -40,7 +44,7 @@ def sample_sleep_seconds(
 def stream_events(
     events: list[UxEvent],
     stream_rate_profile: StreamRateProfile,
-    seed: int,
+    seed: int | None,
 ) -> Iterator[UxEvent]:
     rng = np.random.default_rng(seed)
 

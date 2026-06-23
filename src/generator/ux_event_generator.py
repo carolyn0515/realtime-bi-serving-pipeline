@@ -1,22 +1,44 @@
 from datetime import timedelta
 from uuid import uuid4
-import pandas as pd
+
 import numpy as np
-from src.generator.features import freight_tier, price_tier, review_tier
+import pandas as pd
+
 from src.generator.schema import UxEvent
 from src.generator.traffic_profile import BehaviorDelayProfile, FunnelTrafficProfile
 
+
+def sample_probability(
+    rng: np.random.Generator,
+    min_value: float,
+    max_value: float,
+) -> float:
+    return float(rng.uniform(min_value, max_value))
+
+
 def sample_funnel_outcome(
-        rng: np.random.Generator,
-        traffic_profile: FunnelTrafficProfile,
+    rng: np.random.Generator,
+    traffic_profile: FunnelTrafficProfile,
 ) -> str:
-    has_cart = rng.random() < traffic_profile.view_to_cart_ratio
+    view_to_cart_probability = sample_probability(
+        rng,
+        traffic_profile.view_to_cart_probability_min,
+        traffic_profile.view_to_cart_probability_max,
+    )
+    has_cart = rng.random() < view_to_cart_probability
     if not has_cart:
         return "view_only"
-    has_purchase = rng.random() < traffic_profile.cart_to_purchase_ratio
+
+    cart_to_purchase_probability = sample_probability(
+        rng,
+        traffic_profile.cart_to_purchase_probability_min,
+        traffic_profile.cart_to_purchase_probability_max,
+    )
+    has_purchase = rng.random() < cart_to_purchase_probability
     if not has_purchase:
         return "cart_abandoned"
     return "purchased"
+
 
 def sample_event_times_for_outcome(
     anchor_time: pd.Timestamp,
@@ -71,13 +93,13 @@ def sample_event_times_for_outcome(
 
     raise ValueError(f"Unsupported funnel outcome: {outcome}")
 
+
 def generate_ux_events(
     interactions: pd.DataFrame,
-    seed: int,
+    seed: int | None,
     delay_profile: BehaviorDelayProfile,
     traffic_profile: FunnelTrafficProfile,
 ) -> list[UxEvent]:
-    
     rng = np.random.default_rng(seed)
     shuffled_indices = rng.permutation(len(interactions))
 
@@ -102,29 +124,12 @@ def generate_ux_events(
         user_id = row["customer_unique_id"]
         product_id = row["product_id"]
 
-        order_id = row["order_id"] if outcome == "purchased" else None
-        order_item_id = (
-            f"{row['order_id']}:{row['order_item_id']}"
-            if outcome == "purchased"
-            else None
-        )
-
-        review_score = None if pd.isna(row.get("review_score")) else float(row["review_score"])
-
-        base = {
+        common_base = {
             "session_id": session_id,
             "user_id": user_id,
-            "order_id": order_id,
-            "order_item_id": order_item_id,
             "product_id": product_id,
             "category_code": row.get("product_category_name") or "unknown",
             "price": float(row["price"]),
-            "price_tier": price_tier(float(row["price"])),
-            "review_score": review_score,
-            "review_tier": review_tier(review_score),
-            "freight_value": float(row["freight_value"]),
-            "freight_tier": freight_tier(float(row["freight_value"])),
-            "payment_type": row.get("payment_type") or "unknown",
             "customer_state": row.get("customer_state") or "unknown",
             "seller_state": row.get("seller_state") or "unknown",
         }
@@ -133,12 +138,27 @@ def generate_ux_events(
             if event_type not in event_times:
                 continue
 
+            order_id = None
+            order_item_id = None
+            payment_type = None
+            shipping_fee = None
+
+            if event_type == "purchase":
+                order_id = row["order_id"]
+                order_item_id = f"{row['order_id']}:{row['order_item_id']}"
+                payment_type = row.get("payment_type") or "unknown"
+                shipping_fee = float(row["freight_value"])
+
             events.append(
                 UxEvent(
                     event_id=str(uuid4()),
                     event_type=event_type,
                     event_time=event_times[event_type],
-                    **base,
+                    order_id=order_id,
+                    order_item_id=order_item_id,
+                    payment_type=payment_type,
+                    shipping_fee=shipping_fee,
+                    **common_base,
                 )
             )
 

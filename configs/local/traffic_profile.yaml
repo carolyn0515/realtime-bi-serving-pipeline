@@ -1,7 +1,10 @@
 name: baseline_medium
 
-view_to_cart_ratio: 0.35
-cart_to_purchase_ratio: 0.45
+conversion_probability:
+  view_to_cart_min: 0.18
+  view_to_cart_max: 0.58
+  cart_to_purchase_min: 0.22
+  cart_to_purchase_max: 0.68
 
 behavior_delay:
   view_to_cart_min_seconds: 30
@@ -12,6 +15,7 @@ behavior_delay:
   cart_to_purchase_max_seconds: 600
 
 stream_rate:
-  mean_events_per_second: 5.0
+  mean_events_per_second_min: 2.0
+  mean_events_per_second_max: 12.0
   min_sleep_seconds: 0.02
   max_sleep_seconds: 2.0
