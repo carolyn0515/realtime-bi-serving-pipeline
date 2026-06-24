@@ -1,0 +1,19 @@
+bootstrap_servers: localhost:9092
+topic:
+  name: ux-events
+  partitions: 3
+  replication_factor: 1
+  retention_ms: 604800000
+  cleanup_policy: delete
+
+producer:
+  client_id: ux-log-generator
+  acks: all
+  enable_idempotence: true
+  compression_type: lz4
+  linger_ms: 5
+
+consumer:
+  group_id: ux-events-smoke-test
+  auto_offset_reset: earliest
+  enable_auto_commit: false
