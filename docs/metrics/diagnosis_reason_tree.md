@@ -8,15 +8,14 @@ Candidate dimensions:
 
 - `category_code`
 - `price_tier`
-- `review_tier`
-- `freight_tier`
+- `customer_state`
+- `seller_state`
 
 Likely interpretations:
 
 - Product attractiveness issue.
 - Price sensitivity.
-- Review quality issue.
-- Shipping cost concern before cart.
+- Regional catalog or fulfillment perception issue.
 
 ## cart_to_purchase_drop
 
@@ -24,15 +23,15 @@ Users are adding products to cart but not completing purchase.
 
 Candidate dimensions:
 
-- `payment_type`
-- `freight_tier`
 - `customer_state`
 - `seller_state`
+- `category_code`
+- `price_tier`
 
 Likely interpretations:
 
-- Payment friction.
-- Shipping cost or delivery concern.
+- Checkout or purchase completion friction.
+- Shipping or delivery concern inferred from customer/seller region.
 - Regional fulfillment issue.
 
 ## view_to_purchase_drop
@@ -44,7 +43,7 @@ Candidate dimensions:
 - `category_code`
 - `customer_state`
 - `seller_state`
-- `payment_type`
+- `price_tier`
 
 Likely interpretations:
 
