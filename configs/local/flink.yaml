@@ -1,0 +1,19 @@
+version: "1.19.3"
+
+runtime:
+  mode: streaming
+  default_parallelism: 1
+  checkpoint_interval: 30s
+  checkpoint_mode: EXACTLY_ONCE
+
+kafka_source:
+  topic: ux-events
+  bootstrap_servers: kafka:29092
+  group_id: flink-ux-events-smoke
+  startup_mode: earliest-offset
+  format: json
+
+event_time:
+  source_field: event_time
+  computed_column: event_ts
+  watermark_delay: 30 seconds
