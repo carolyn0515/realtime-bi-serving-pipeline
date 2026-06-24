@@ -1,0 +1,20 @@
+version: "latest"
+
+connection:
+  host: 127.0.0.1
+  query_port: 9030
+  http_port: 8030
+  be_http_port: 8040
+  user: root
+
+paimon_catalog:
+  name: paimon_lakehouse
+  type: paimon
+  catalog_type: filesystem
+  warehouse: file:/warehouse/paimon
+  database: lakehouse
+
+serving:
+  database: bi_serving
+  health_view: v_funnel_health
+  anomaly_view: v_anomaly_watchlist
