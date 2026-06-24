@@ -27,6 +27,8 @@ All rate calculations must use `NULLIF(denominator, 0)` or equivalent safe divis
 - `freshness_lag_seconds`: Difference between current processing time and latest published window end.
 - `late_event_ratio`: Late event count divided by valid event count.
 - `dq_status`: `PASS` or `FAIL`.
+- `dq_run_id`: Identifier for one publish-gate quality check run.
+- `dq_error_reason`: Machine-readable reason when a staging row fails publication.
 - `published_at`: Timestamp when the window became available to BI.
 
 ## Anomaly Metrics
@@ -35,3 +37,9 @@ All rate calculations must use `NULLIF(denominator, 0)` or equivalent safe divis
 - `rate_stddev`: Historical standard deviation for the baseline segment.
 - `drop_rate = (baseline_rate - current_rate) / baseline_rate`
 - `severity`: `normal`, `warning`, or `critical`.
+- `anomaly_stage`: Funnel stage with the largest meaningful drop.
+- `baseline_scope`: Comparison scope used for the row, such as `exact_segment`, `category_price`, or `global`.
+
+Baseline comparison uses a fallback hierarchy so sparse exact segments do not create overconfident anomaly labels.
+
+Current rows also need enough volume before they can become warning or critical. Tiny windows are kept in the scored table, but their anomaly label remains `normal`.
