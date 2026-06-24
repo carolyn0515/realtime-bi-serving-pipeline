@@ -16,21 +16,50 @@ Required identifiers:
 Required time fields:
 
 - `event_time`
-- `ingested_at`
+- `event_ts`
+- `emitted_at`
 
 Required event fields:
 
 - `event_type`
 - `category_code`
 - `price`
-- `price_tier`
-- `review_score`
-- `review_tier`
-- `freight_value`
-- `freight_tier`
 - `payment_type`
 - `customer_state`
 - `seller_state`
+
+Purchase-only fields:
+
+- `order_id`
+- `order_item_id`
+- `payment_type`
+- `shipping_fee`
+
+Operational fields:
+
+- `kafka_partition`
+- `kafka_offset`
+- `kafka_timestamp`
+
+## Session Funnel Staging Grain
+
+One row represents one session and one product.
+
+Primary key candidate:
+
+- `session_id`
+- `product_id`
+
+Measures and state fields:
+
+- `view_ts`
+- `cart_ts`
+- `purchase_ts`
+- `has_view`
+- `has_cart`
+- `has_purchase`
+- `source_event_count`
+- `duplicate_event_count`
 
 ## Funnel Staging Mart Grain
 
@@ -42,9 +71,6 @@ Primary key:
 - `window_end`
 - `category_code`
 - `price_tier`
-- `review_tier`
-- `freight_tier`
-- `payment_type`
 - `customer_state`
 - `seller_state`
 
@@ -53,6 +79,9 @@ Measures:
 - `view_count`
 - `cart_count`
 - `purchase_count`
+- `view_session_count`
+- `cart_session_count`
+- `purchase_session_count`
 - `view_to_cart_rate`
 - `cart_to_purchase_rate`
 - `view_to_purchase_rate`

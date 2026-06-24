@@ -23,3 +23,25 @@ paimon:
   warehouse: file:/warehouse/paimon
   database: lakehouse
   bronze_table: ux_events_bronze
+  clean_table: ux_events_clean
+  invalid_table: ux_events_invalid
+  session_staging_table: session_funnel_staging
+  funnel_staging_table: mart_funnel_1h_staging
+  dq_audit_table: dq_audit_result
+  funnel_published_table: mart_funnel_1h_published
+  baseline_table: funnel_baseline_profile
+  funnel_anomaly_table: mart_funnel_1h_anomaly
+
+dq:
+  max_late_event_ratio: 0.05
+  fail_on_duplicate_events: true
+  fail_on_malformed_events: true
+
+anomaly:
+  exact_segment_min_windows: 3
+  exact_segment_min_views: 10
+  category_price_min_windows: 3
+  category_price_min_views: 10
+  current_min_views: 10
+  warning_drop_rate: 0.25
+  critical_drop_rate: 0.50
