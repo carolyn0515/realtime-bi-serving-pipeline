@@ -17,3 +17,9 @@ event_time:
   source_field: event_time
   computed_column: event_ts
   watermark_delay: 30 seconds
+
+paimon:
+  catalog: paimon
+  warehouse: file:/warehouse/paimon
+  database: lakehouse
+  bronze_table: ux_events_bronze
